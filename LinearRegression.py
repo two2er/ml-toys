@@ -1,4 +1,8 @@
 # -*- endoding: utf-8 -*-
+
+# todo: regularization, inheritation
+# todo: polynomial
+
 import numpy as np
 
 class LinearRegressor(object):
