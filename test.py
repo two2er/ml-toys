@@ -3,18 +3,19 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from LinearRegression import LinearRegressor
+from LinearRegression import *
 
 def test_linear_regression():
     X = 2 * np.random.rand(100, 1)
     y = 4 + 3 * X + np.random.randn(100, 1)
 
-    lr = LinearRegressor(method='gradient', gradient='batch')
-    lr.fit(X, y, debug=True)
+    lr = StochasticGradientRegressor()
+    lr.fit(X, y)
     test_X = np.array([[0], [2]])
     pred_y = lr.predict(test_X)
 
     print(lr.theta)
+    print(pred_y)
 
     '''
     we can know that by setting parameter debug=True, stochastic and mini-batch gradient
