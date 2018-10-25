@@ -3,13 +3,15 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from LinearRegression import *
+from RegularizedLinearRegression import *
+
+
 
 def test_linear_regression():
     X = 2 * np.random.rand(100, 1)
     y = 4 + 3 * X + np.random.randn(100, 1)
 
-    lr = StochasticGradientRegressor()
+    lr = RidgeLinearRegressor(tolerance=1e-6, alpha=0.5)
     lr.fit(X, y)
     test_X = np.array([[0], [2]])
     pred_y = lr.predict(test_X)
