@@ -5,13 +5,9 @@ import abc
 
 class LinearRegressor:
 
-    def __init__(self, learning_rate = 1e-3, tolerance = 1e-3):
-        """
-        if the training method is gradient descent, the training process would be ended after the
-        l2-norm of gradient vector is smaller than tolerance e.
-        """
+    def __init__(self, learning_rate = 1e-3, epoch = 2000):
         self.learning_rate = learning_rate
-        self.tolerance = tolerance
+        self.epoch = epoch
 
     def fit(self, X, y):
         """
@@ -19,7 +15,6 @@ class LinearRegressor:
         if the gradient descent method is mini-batch, the parameter batch_size would be taken as
         the size of one batch
         """
-
         # add x_0 = 1 for samples
         X_b = np.insert(X, 0, 1, axis=1)
         # theta: randomly initialized: [-1/sqrt(n), 1/sqrt(n)]
@@ -45,7 +40,7 @@ class NormalRegressor(LinearRegressor):
     training with the Normal Equation
     hat_theta = (X.T.dot(X)).inverse.dot(X.T).dot(y)
     in fact NormalRegressor should not inherit from LinearRegressor because it does not have
-    learning_rate and tolerance attributes.
+    learning_rate and epoch attributes.
     """
     def training_method(self, X, y):
         self.theta = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
@@ -53,26 +48,15 @@ class NormalRegressor(LinearRegressor):
 class BatchGradientRegressor(LinearRegressor):
 
     def training_method(self, X, y):
-        while True:
+        for epoch in range(self.epoch):
             gradient_vector = 2 / X.shape[0] * X.T.dot(X.dot(self.theta) - y)
-            if np.linalg.norm(gradient_vector) < self.tolerance:
-                break
             self.theta = self.theta - self.learning_rate * gradient_vector
 
 class StochasticGradientRegressor(LinearRegressor):
 
     def training_method(self, X, y):
         m = X.shape[0]
-        epoch_count = 0
-        while True:
-            # evaluate the norm of gradient vector every 10 epochs. or terminate after 2000 epochs
-            epoch_count += 1
-            if epoch_count % 10 == 0:
-                gradient_vector = 2 / m * X.T.dot(X.dot(self.theta) - y)
-                if np.linalg.norm(gradient_vector) < self.tolerance:
-                    break
-            if epoch_count == 2000:
-                break
+        for epoch in range(self.epoch):
             # randomly shuffle X
             random_sequence = np.random.permutation([i for i in range(m)])
             self.learning_rate = self.learning_schedule(self.learning_rate)
@@ -88,22 +72,13 @@ class StochasticGradientRegressor(LinearRegressor):
     
 class MiniBatchGradientRegressor(LinearRegressor):
 
-    def __init__(self, learning_rate = 1e-3, tolerance = 1e-3, batch_size=20):
+    def __init__(self, learning_rate = 1e-3, epoch = 2000, batch_size=20):
         self.batch_size = batch_size
-        super(MiniBatchGradientRegressor, self).__init__(learning_rate, tolerance)
+        super(MiniBatchGradientRegressor, self).__init__(learning_rate, epoch)
 
     def training_method(self, X, y):
         m = X.shape[0]
-        epoch_count = 0
-        while True:
-            # evaluate the norm of gradient vector every 10 epochs. or terminate after 2000 epochs
-            epoch_count += 1
-            if epoch_count % 10 == 0:
-                gradient_vector = 2 / m * X.T.dot(X.dot(self.theta) - y)
-                if np.linalg.norm(gradient_vector) < self.tolerance:
-                    break
-            if epoch_count == 2000:
-                break
+        for epoch in range(self.n_iterate):
             # randomly shuffle X
             random_sequence = np.random.permutation([i for i in range(m)])
             self.learning_rate = self.learning_schedule(self.learning_rate)
