@@ -1,5 +1,17 @@
 # -*- endoding: utf-8 -*-
 
+"""
+this is the very basic linear regression model. some defects bothered me while testing.
+1. if the values are big, the MSE would be very obvious and even disturb the 
+   process of training. Sometimes it is useless to aply normalization to the trainset,
+   because this model is very sensitive to the offset of data.
+2. it is hard to find the appropriate learning rate and amount of epochs, therefore
+   sometimes the outcome would be strange. If you print the MSE or l2-norm of gradient
+   vector every gradient descent step, you would find that the number is 'exploding',
+   which means it increases in a very high speed, and just after several iterations,
+   it would become a nan.
+"""
+
 import numpy as np
 import abc
 
