@@ -17,7 +17,6 @@ this is the very basic linear regression model. some defects bothered me while t
 """
 
 import numpy as np
-import abc
 
 class LinearRegressor:
 
@@ -39,9 +38,8 @@ class LinearRegressor:
 
         self.training_method(X_b, y)
 
-    @abc.abstractmethod
     def training_method(self, X, y):
-        pass
+        raise NotImplementedError()
 
     def predict(self, X):
         """
