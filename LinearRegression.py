@@ -5,9 +5,9 @@ import abc
 
 class LinearRegressor:
 
-    def __init__(self, learning_rate = 1e-3, epoch = 2000):
+    def __init__(self, learning_rate = 1e-3, n_epoch = 2000):
         self.learning_rate = learning_rate
-        self.epoch = epoch
+        self.n_epoch = n_epoch
 
     def fit(self, X, y):
         """
@@ -48,7 +48,7 @@ class NormalRegressor(LinearRegressor):
 class BatchGradientRegressor(LinearRegressor):
 
     def training_method(self, X, y):
-        for epoch in range(self.epoch):
+        for epoch in range(self.n_epoch):
             gradient_vector = 2 / X.shape[0] * X.T.dot(X.dot(self.theta) - y)
             self.theta = self.theta - self.learning_rate * gradient_vector
 
@@ -56,7 +56,7 @@ class StochasticGradientRegressor(LinearRegressor):
 
     def training_method(self, X, y):
         m = X.shape[0]
-        for epoch in range(self.epoch):
+        for epoch in range(self.n_epoch):
             # randomly shuffle X
             random_sequence = np.random.permutation([i for i in range(m)])
             self.learning_rate = self.learning_schedule(self.learning_rate)
@@ -72,13 +72,13 @@ class StochasticGradientRegressor(LinearRegressor):
     
 class MiniBatchGradientRegressor(LinearRegressor):
 
-    def __init__(self, learning_rate = 1e-3, epoch = 2000, batch_size=20):
+    def __init__(self, learning_rate = 1e-3, n_epoch = 2000, batch_size=20):
         self.batch_size = batch_size
-        super(MiniBatchGradientRegressor, self).__init__(learning_rate, epoch)
+        super(MiniBatchGradientRegressor, self).__init__(learning_rate, n_epoch)
 
     def training_method(self, X, y):
         m = X.shape[0]
-        for epoch in range(self.n_iterate):
+        for epoch in range(self.n_epoch):
             # randomly shuffle X
             random_sequence = np.random.permutation([i for i in range(m)])
             self.learning_rate = self.learning_schedule(self.learning_rate)
@@ -90,4 +90,7 @@ class MiniBatchGradientRegressor(LinearRegressor):
                 gradient_vector = 2 * xi.T.dot(xi.dot(self.theta) - yi)
                 self.theta = self.theta - self.learning_rate * gradient_vector
 
+    def learning_schedule(self, learning_rate):
+        # learning rate decay
+        return learning_rate * 0.99
 
