@@ -23,6 +23,7 @@ class PolynomialRegressor(BatchGradientRegressor):
         return X_pol
 
     def fit(self, X, y):
+        """X: n_sample*n_feature, y: n_sample*n_class"""
         super(PolynomialRegressor, self).fit(self._polynoimalize(X), y)
 
     def predict(self, X):

@@ -30,6 +30,8 @@ class LinearRegressor:
         begin to train a model based on trainset X and target value set y.
         if the gradient descent method is mini-batch, the parameter batch_size would be taken as
         the size of one batch
+
+        X: n_sample*n_feature, y: n_sample*n_class
         """
         # add x_0 = 1 for samples
         X_b = np.insert(X, 0, 1, axis=1)

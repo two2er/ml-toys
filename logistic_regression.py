@@ -32,6 +32,7 @@ class LogisticRegressor:
         return -sum / X.shape[0]
 
     def fit(self, X, y):
+        """X: n_sample*n_feature, y: n_sample*n_class"""
         # add x_0 = 1 for samples
         X_b = np.insert(X, 0, 1, axis=1)
         # theta: randomly initialized: [-1/sqrt(n), 1/sqrt(n)]
