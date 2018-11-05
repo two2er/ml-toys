@@ -1,6 +1,3 @@
-# -*- endoding: utf-8 -*-
-
-
 # this is the very basic linear regression model. some defects bothered me while testing.
 # 1. if the values are big, the MSE would be very obvious and even disturb the 
 #    process of training. Sometimes it is useless to aply normalization to the trainset,
