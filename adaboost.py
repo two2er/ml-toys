@@ -93,9 +93,7 @@ class AdaBoost:
         prediction = np.empty(X.shape[0])
         for i in range(X.shape[0]):
             pred_for_xi = np.array([preds[j][i] for j in range(self.n_estimators)])
-            alpha_sum_for_positive = np.sum(self.estimator_weight[pred_for_xi==1])
-            alpha_sum_for_negative = np.sum(self.estimator_weight[pred_for_xi==-1])
-            prediction[i] = 1 if alpha_sum_for_positive >= alpha_sum_for_negative else -1
+            prediction[i] = np.sign(np.sum(pred_for_xi*self.estimator_weight))
 
         return prediction
 
