@@ -21,7 +21,7 @@ class TreeNode:
 class DecisionTree:
     """ base class of DecisionTreeClassifier and DecisionTreeRegressor """
     def __init__(self, min_samples_split=2, min_impurity_decrease=1e-7,
-                 max_depth=None):
+                 max_depth=None, max_features=None, random_state=0):
         """ decision tree classifier based on CART
         min_samples_split: int
             The minimum number of samples needed to make a split when building a tree.
@@ -30,13 +30,16 @@ class DecisionTree:
             than or equal to this value.
         max_depth: int
             The maximum depth of a tree. None means inf
+        max_features: int
+            The maximum number of features considered when spliting a node.
+        random_state: int
+            Random_state is the seed used by the random number generator.
         """
         self.min_samples_split = min_samples_split
         self.min_impurity_decrease = min_impurity_decrease
-        if max_depth is None:
-            self.max_depth = float('inf')
-        else:
-            self.max_depth = max_depth
+        self.max_depth = float('inf') if max_depth is None else max_depth
+        self.max_features = max_features
+        np.random.seed(random_state)
         # the root node of decision tree
         self.root = None
 
@@ -67,8 +70,9 @@ class DecisionTree:
         # the largest extent
         best_feature, best_value, best_impurity_decrease = -1, -1, -float('inf')
         current_impurity = self._impurity(node.y)
-        # try all features
-        for feature in range(node.X.shape[1]):
+        # try max_features features
+        feature_seq = np.random.permutation(range(node.X.shape[1]))[:self.max_features]
+        for feature in feature_seq:
             feature_values = np.unique(node.X[:, feature])
             # try all feature values
             for feature_value in feature_values:
@@ -116,29 +120,10 @@ class DecisionTree:
         else:
             return self._predict_each(x, node.right_child)
 
-    def print_tree(self, node=None, indent=" "):
-        """ Recursively print the decision tree """
-
-        # start from root
-        if node is None:
-            node = self.root
-
-        # If we're at leaf => print the label
-        if node.leaf:
-            print(node.leaf_predict)
-        # Go deeper down the tree
-        else:
-            # Print test
-            print("%s:%s? " % (node.split_feature, node.split_value))
-            # Print the true scenario
-            print("%sleft->" % (indent), end="")
-            self.print_tree(node.left_child, indent + indent)
-            # Print the false scenario
-            print("%srigh->" % (indent), end="")
-            self.print_tree(node.right_child, indent + indent)
 
 class DecisionTreeClassifier(DecisionTree):
     """ targets are discrete labels """
+
     def _impurity(self, y):
         """gini impurity
 
@@ -158,6 +143,7 @@ class DecisionTreeClassifier(DecisionTree):
 
 class DecisionTreeRegressor(DecisionTree):
     """ targets are continuous values """
+
     def _impurity(self, y):
         """ variance """
         return np.var(y)
