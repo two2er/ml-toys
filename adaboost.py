@@ -96,13 +96,3 @@ class AdaBoost:
             prediction[i] = np.sign(np.sum(pred_for_xi*self.estimator_weight))
 
         return prediction
-
-
-
-if __name__ == '__main__':
-    X = np.array([[1],[2],[3],[4],[2]])
-    y = np.array([1, 1, -1, -1, 1])
-    ds = DecisionStump()
-    ds.fit(X, y, np.full(X.shape[0], 1/X.shape[0]))
-    print(ds.split_feature, ds.split_value)
-    print(ds.predict(X))
