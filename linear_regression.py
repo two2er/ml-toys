@@ -1,18 +1,3 @@
-# this is the very basic linear regression model. some defects bothered me while testing.
-# 1. if the values are big, the MSE would be very obvious and even disturb the 
-#    process of training. Sometimes it is useless to aply normalization to the trainset,
-#    because this model is very sensitive to the offset of data.
-#    At first, I compare the predicted weights to judge the performance of a model. However,
-#    in the case that feature values are much bigger than weights, the prediction of
-#    weights is strongly different from the true values, especially the offset, but
-#    MSE is not as obvious as the bias of predicted weights.
-# 2. it is hard to find the appropriate learning rate and amount of epochs, therefore
-#    sometimes the outcome would be strange. If you print the MSE or l2-norm of gradient
-#    vector every gradient descent step, you would find that the number is 'exploding',
-#    which means it increases in a very high speed, and just after several iterations,
-#    it would become a nan.
-
-
 import numpy as np
 
 class LinearRegressor:
@@ -108,4 +93,19 @@ class MiniBatchGradientRegressor(LinearRegressor):
     def learning_schedule(self, learning_rate):
         # learning rate decay
         return learning_rate * 0.99
+
+
+# this is the very basic linear regression model. some defects bothered me while testing.
+# 1. if the feature values are big, the MSE would be very big and even disturb the 
+#    process of training. Sometimes it is useless to aply normalization to the trainset,
+#    because this model is very sensitive to the offset of data.
+#    At first, I compare the predicted weights to judge the performance of a model. However,
+#    in the case that feature values are much bigger than weights, the prediction of
+#    weights is strongly different from the true values, especially the offset, but
+#    MSE is not as obvious as the bias of predicted weights.
+# 2. it is hard to find the appropriate learning rate and amount of epochs, therefore
+#    sometimes the outcome would be strange. If you print the MSE or l2-norm of gradient
+#    vector every gradient descent step, you would find that the number is 'exploding',
+#    which means it increases in a very high speed, and just after several iterations,
+#    it would become a nan.
 

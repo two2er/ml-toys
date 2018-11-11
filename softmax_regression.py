@@ -1,6 +1,3 @@
-__author__ = 'twoer2'
-__email__ = 'dtcf@163.com'
-
 import numpy as np
 
 class SoftmaxRegressor:

@@ -1,5 +1,3 @@
-# -*- endoding: utf-8 -*-
-
 import numpy as np
 from itertools import combinations_with_replacement
 from LinearRegression import BatchGradientRegressor
