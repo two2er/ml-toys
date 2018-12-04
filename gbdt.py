@@ -163,12 +163,12 @@ class GBDT:
         g_i = 2(\hat{y}^{t-1}_i-y_i)
         h_i = 2
     """
-    def __init__(self, n_estimators=10, max_depth=5,
+    def __init__(self, n_estimators=10, max_depth=None,
                  min_samples_split=2,
-                 min_object_decrease=0.1,
+                 min_object_decrease=0,
                  random_state=None,
                  _lambda=1, _gamma=0.0,
-                 learning_rate=0.3):
+                 learning_rate=0.1):
         self.n_estimators = n_estimators
 
         self.min_samples_split = min_samples_split
@@ -188,20 +188,23 @@ class GBDT:
         label = np.array(label)
         m, n = train.shape
         # shrinking learning rate
-        shrinkage = 1.
+        shrinkage = self.learning_rate
 
         # a list of base estimators (length = n_estimators)
         self.trees = []
         
         # \hat{y}_{t-1}. initialized with mean
         self.mean_of_train = np.mean(label)
-        hat_y = np.full(m, self.mean_of_train)
+        hat_y = np.zeros(m)
         
         # calculate G and H for each base estimator
         # since h_i is always 2, we can fix H to a constant array
         H = np.full(m, 2)
         for i in range(self.n_estimators):
-            G = self._getG(hat_y, label)
+            if i == 0:
+                G = np.random.uniform(size=m)
+            else:
+                G = self._getG(hat_y, label)
 
             if i < 0:
                 print(i, G)
@@ -217,10 +220,10 @@ class GBDT:
             pred = tree.predict(train)
             hat_y += pred
 
-            shrinkage *= self.learning_rate
+            shrinkage = self.learning_rate
 
             if i < 0:
-                print(i, shrinkage*pred)
+                print(i, pred)
 
             if i < 0:
                 print(hat_y)
@@ -241,7 +244,7 @@ class GBDT:
         return rtn
 
     def predict(self, test, test_y):
-        rtn = np.full(test.shape[0], self.mean_of_train)
+        rtn = np.zeros(len(test))
         print(self._mse(rtn, test_y))
         for i in range(self.n_estimators):
             pred = self.trees[i].predict(test)
