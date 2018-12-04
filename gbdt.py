@@ -66,7 +66,7 @@ class GBDT_tree:
         
     def _weight(self, index):
         # return weight of a node
-        return -np.sum(self.G[index]) / (np.sum(self.H[index])+self._lambda)
+        return -np.sum(self.G[index]) / (np.sum(self.H[index])+self._lambda) * self.shrinkage
 
     def _object(self, index):
         # return the objective function of splitting
@@ -76,7 +76,7 @@ class GBDT_tree:
         # process the given index, and given a node
         # decide whether it is splitable. If it is, it is an internal node. else it is a leaf node
         if len(index) < self.min_samples_split:
-            return Node(val=self._weight(index)*self.shrinkage, leaf=True)
+            return Node(val=self._weight(index), leaf=True)
         
         current_object = self._object(index)
 
@@ -107,7 +107,7 @@ class GBDT_tree:
                 
         # if the best_object_gain is smaller than min_object_decrease, it is a leaf
         if len(index)/self.N * best_object_gain <= self.min_object_decrease:
-            return Node(val=self._weight(index)*self.shrinkage, leaf=True)
+            return Node(val=self._weight(index), leaf=True)
         
         # return an internal node
         return Node(index=best_index, split_feature=best_feature, split_value=threshold, leaf=False)
@@ -120,7 +120,7 @@ class GBDT_tree:
         # if the depth >= max_depth, stop
         if node.depth >= self.max_depth:
             node.leaf = True
-            node.val = self._weight(node.index)*self.shrinkage
+            node.val = self._weight(node.index)
             return
         
         # split the index of node into two groups: left child and right child
@@ -187,14 +187,11 @@ class GBDT:
         train = np.array(train)
         label = np.array(label)
         m, n = train.shape
-        # shrinking learning rate
-        shrinkage = self.learning_rate
 
         # a list of base estimators (length = n_estimators)
         self.trees = []
         
-        # \hat{y}_{t-1}. initialized with mean
-        self.mean_of_train = np.mean(label)
+        # \hat{y}_{t-1}. initialized with 0
         hat_y = np.zeros(m)
         
         # calculate G and H for each base estimator
@@ -206,12 +203,9 @@ class GBDT:
             else:
                 G = self._getG(hat_y, label)
 
-            if i < 0:
-                print(i, G)
-
             tree = self.base_estimator(self.max_depth, self.min_samples_split,
                                        self.min_object_decrease, self.random_state,
-                                       self._lambda, self._gamma, shrinkage)
+                                       self._lambda, self._gamma, self.learning_rate)
 
             tree.fit(train, G, H)
             self.trees.append(tree)
@@ -219,21 +213,6 @@ class GBDT:
             # update hat_y
             pred = tree.predict(train)
             hat_y += pred
-
-            shrinkage = self.learning_rate
-
-            if i < 0:
-                print(i, pred)
-
-            if i < 0:
-                print(hat_y)
-
-            if i >= 0:
-                print(self._mse(hat_y, label))
-            
-    def _mse(self, hat_y, label):
-        return np.linalg.norm(hat_y-label)
-        # return np.mean(np.square(hat_y-label))
 
     def _getG(self, hat_y, label):
         # if len(self.trees) == 0:
@@ -243,13 +222,10 @@ class GBDT:
             rtn[i] = 2 * (hat_y[i] - label[i])
         return rtn
 
-    def predict(self, test, test_y):
+    def predict(self, test):
         rtn = np.zeros(len(test))
-        print(self._mse(rtn, test_y))
         for i in range(self.n_estimators):
             pred = self.trees[i].predict(test)
             rtn += pred
-            # shrinkage *= self.learning_rate
-            print(self._mse(rtn, test_y))
 
         return rtn
