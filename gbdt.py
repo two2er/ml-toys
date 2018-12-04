@@ -191,17 +191,15 @@ class GBDT:
         # a list of base estimators (length = n_estimators)
         self.trees = []
         
-        # \hat{y}_{t-1}. initialized with 0
-        hat_y = np.zeros(m)
+        # \hat{y}_{t-1}. initialized with mean
+        self.mean_of_train = np.mean(label)
+        hat_y = np.full(m, self.mean_of_train)
         
         # calculate G and H for each base estimator
         # since h_i is always 2, we can fix H to a constant array
         H = np.full(m, 2)
         for i in range(self.n_estimators):
-            if i == 0:
-                G = np.random.uniform(size=m)
-            else:
-                G = self._getG(hat_y, label)
+            G = self._getG(hat_y, label)
 
             tree = self.base_estimator(self.max_depth, self.min_samples_split,
                                        self.min_object_decrease, self.random_state,
@@ -223,7 +221,7 @@ class GBDT:
         return rtn
 
     def predict(self, test):
-        rtn = np.zeros(len(test))
+        rtn = np.full(len(test), self.mean_of_train)
         for i in range(self.n_estimators):
             pred = self.trees[i].predict(test)
             rtn += pred
