@@ -1,6 +1,6 @@
 # ml-toys
 ---
 
-These are some basic implementations of machine learning models. There is no any optimization on computation performance or storage. Furthermore, only some instances of models, like decision stump AdaBoost, are available, rather than all kinds of base predictor suitable for AdaBoost. This repository only helps to understand the basic idea of machine learning.
+These are some implementations of basic machine learning models. I wrote them mainly with the help of my undergraduate course textbook, and learned some tricks from others' GitHub repositories to simplify my codes.
 
-My English is poor, and therefore comments would be modified in future.
+There is no any optimization on computing performance or memory. Furthermore, only the basic bones of models are available. The main purpose of this repository is to help me understand the basic concept of famous machine learning models. Wish it can also help you to clarify some most important ideas in this field.
