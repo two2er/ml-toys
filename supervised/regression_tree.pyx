@@ -9,22 +9,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from libc.stdlib cimport realloc
-from libc.stdlib cimport malloc, free
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-"""
-todo: 
-   X    memoryview -> C pointer
-  no    constant feature
-   X    FEATURE_THRESHOLD
-        recursive -> Stack (optional)
-   X    samples
-   X    fortran
-   X    sort
-
-"""
+from libc.stdlib cimport realloc, free
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -130,7 +115,7 @@ cdef class DecisionTreeRegressor:
             self.random_state = <UINT32_t>np.random.randint(1, 10000)
 
         self.root = NULL
-        
+
         # self.max_depth == -1 means no fixed max_depth
         if self.max_depth == -1:
             self.max_depth = INF
@@ -176,17 +161,17 @@ cdef class DecisionTreeRegressor:
         self.n_samples = train.shape[0]
         self.n_features = train.shape[1]
 
-        # self.max_features == -1 means use all features when spliting a node
+        # self.max_features == -1 means use all features when splitting a node
         if self.max_features == -1:
             self.max_features = self.n_features
 
-        # index: the index of all trainsets in a node
+        # index: the index of all samples in a node
         self.index = <SIZE_t*>realloc(self.index, self.n_samples*sizeof(SIZE_t))
         assert self.index != NULL, "fail to allocate memory to index array"
 
         cdef SIZE_t i
         for i in range(self.n_samples):
-            self.index[i] = i        
+            self.index[i] = i
 
         # the first node (root) would be created from samples[start, end]
         cdef SIZE_t start = 0, end = self.n_samples
@@ -207,6 +192,8 @@ cdef class DecisionTreeRegressor:
 
     cdef void _create_node(self, Node **node, SIZE_t start, SIZE_t end):
 
+        # print('creating node:', start, end)
+
         assert start != end, "a node must have some samples"
 
         # allocate memory
@@ -216,14 +203,14 @@ cdef class DecisionTreeRegressor:
         # num of samples in this node
         cdef SIZE_t n_node_samples = end - start
 
-        # decide whether it is splitable. If it is, it is an internal node. else it is a leaf node
+        # decide whether it is splittable. If it is, it is an internal node. else it is a leaf node
         if n_node_samples < self.min_samples_split:
             node[0][0] = Node(self._mean_of_target_from_start_to_end(start, end), -1, -1, 1, 0, NULL, NULL, start, end)
             return
 
         # impurity of this node
         cdef double current_impurity = self._var_of_target_from_start_to_end(start, end)
-        
+
         cdef:
             SIZE_t i, j, f
             SIZE_t feature
@@ -250,11 +237,11 @@ cdef class DecisionTreeRegressor:
             DTYPE_t best_value
             SIZE_t best_feature
 
-        for j in range(self.max_features):
+        for j in range(self.n_features):
             # randomly select a feature from self.features[j:self.n_features]
             f = rand_int(j, self.n_features, &self.random_state)
             feature = self.features[f]      # current feature
-            # move self.features[f] to self.features[j], aviod to be sampled again
+            # switch self.features[f] and self.features[j], avoid to be sampled again
             self.features[j], self.features[f] = self.features[f], self.features[j]
 
             # copy feature values to self.Xf
@@ -269,7 +256,7 @@ cdef class DecisionTreeRegressor:
             #     if self.train[self.index[i]+self.train_feature_stride*feature] < prev:
             #         raise ValueError("index sort fail")
             #     prev = self.train[self.index[i]+self.train_feature_stride*feature]
-
+            #
             # prev = self.Xf[start]
             # for i in range(start+1, end):
             #     if self.Xf[i] < prev:
@@ -313,16 +300,12 @@ cdef class DecisionTreeRegressor:
                 # we think that current_value != next_value
                 if current_value + FEATURE_THRESHOLD < next_value:
                     left_variance = (sum_sqr_left - sum_left ** 2 / (i+1)) / (i+1)
-                    # avoid divided by 0
-                    if i != n_node_samples - 1:
-                        right_variance = (sum_sqr_right - sum_right ** 2 / (n_node_samples-i-1)) / (n_node_samples-i-1)
-                    else:
-                        right_variance = 0
+                    right_variance = (sum_sqr_right - sum_right ** 2 / (n_node_samples-i-1)) / (n_node_samples-i-1)
                     left_propo = <double>(i+1) / n_node_samples
                     right_propo = 1 - left_propo
 
                     gain_impurity = current_impurity - (left_propo*left_variance + right_propo*right_variance)
-                    
+
                     if gain_impurity > best_impurity:
                         best_feature, best_value, best_impurity = feature, (current_value+next_value)/2, gain_impurity
 
@@ -338,7 +321,7 @@ cdef class DecisionTreeRegressor:
         return
 
     cdef void _split(self, Node **node):
-        # if it is a leaf node, end spliting
+        # if it is a leaf node, end splitting
         if node[0].leaf:
             return
         # if the depth >= max_depth, stop
@@ -369,21 +352,30 @@ cdef class DecisionTreeRegressor:
 
         assert node[0].start != pos and pos != node[0].end, "fail to choose a valid split point"
 
-        self._create_node(&(node[0].left), node[0].start, pos)
-        self._create_node(&(node[0].right), pos, node[0].end)
+        # print('splitting into two nodes:', node[0].start, pos, node[0].end)
+        #
+        # for i in range(node[0].start, node[0].end):
+        #     if i < pos:
+        #         assert self.train[self.index[i]+self.train_feature_stride*node[0].split_feature] <= node[0].split_value, 'split error'
+        #     else:
+        #         assert self.train[self.index[i]+self.train_feature_stride*node[0].split_feature] > node[0].split_value, 'split error'
+        # print('finish splitting check')
+
+        self._create_node(&node[0].left, node[0].start, pos)
+        self._create_node(&node[0].right, pos, node[0].end)
         node[0].left.depth = node[0].depth + 1
         node[0].right.depth = node[0].depth + 1
 
-        self._split(&(node[0].left))
-        self._split(&(node[0].right))
-        
+        self._split(&node[0].left)
+        self._split(&node[0].right)
+
     cpdef predict(self, object test):
         assert self.root != NULL, "train before predict"
 
         test = np.array(test, dtype=np.float32)
         self.test_n_samples = test.shape[0]
         assert test.shape[1] == self.n_features, "testset must have the same feature num as trainset"
-        
+
         cdef np.ndarray test_ndarray = test
         self.test = <DTYPE_t*> test_ndarray.data
         self.test_sample_stride = <SIZE_t> test.strides[0] / <SIZE_t> test.itemsize
@@ -402,7 +394,7 @@ cdef class DecisionTreeRegressor:
             self.predict_result[i] = node.val
 
         return self._predict_ptr_to_ndarray()
-    
+
     cdef DOUBLE_t _mean_of_target_from_start_to_end(self, SIZE_t start, SIZE_t end):
         cdef DOUBLE_t _mean = 0.0
         cdef SIZE_t i
