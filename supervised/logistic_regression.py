@@ -2,7 +2,7 @@ import numpy as np
 
 
 class LogisticRegression:
-    """Logistic regression classifier
+    """Logistic regression classifier. binary label: 0 or 1
 
     hat_p = h_theta(x) = sigma(x.dot(theta)), where sigma is a sigmoid function:
         sigma(t) = 1 / (1 + exp(-t))
@@ -61,7 +61,8 @@ if __name__ == '__main__':
     y = np.expand_dims(y, axis=1).astype(np.float64)
     from sklearn.model_selection import train_test_split
     train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=0.3, random_state=40)
-    model = LogisticRegression(n_epoch=20)
+    model = LogisticRegression(n_epoch=100, learning_rate=0.05)
     model.fit(train_X, train_y)
     pred = model.predict(test_X)
     print('mse:', np.sum((pred-test_y)**2) / len(test_y))
+    print('accuracy:', np.sum(pred==test_y)/len(test_y))
