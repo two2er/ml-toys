@@ -95,8 +95,8 @@ cdef class DecisionTreeRegressor:
 
 
     def __cinit__(self, max_depth=-1, min_samples_split=2,
-                 min_impurity_decrease=0.0, max_features=-1,
-                 random_state=-1):
+                  min_impurity_decrease=0.0, max_features=-1,
+                  random_state=-1):
         '''
         max_depth: the maximum depth of the tree
         min_samples_split: the minimum number of samples required to split an internal node
@@ -237,7 +237,7 @@ cdef class DecisionTreeRegressor:
             DTYPE_t best_value
             SIZE_t best_feature
 
-        for j in range(self.n_features):
+        for j in range(self.max_features):
             # randomly select a feature from self.features[j:self.n_features]
             f = rand_int(j, self.n_features, &self.random_state)
             feature = self.features[f]      # current feature
