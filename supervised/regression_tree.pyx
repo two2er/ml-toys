@@ -237,6 +237,8 @@ cdef class DecisionTreeRegressor:
             DTYPE_t best_value
             SIZE_t best_feature
 
+        best_impurity = 0.0
+
         for j in range(self.max_features):
             # randomly select a feature from self.features[j:self.n_features]
             f = rand_int(j, self.n_features, &self.random_state)
@@ -265,7 +267,6 @@ cdef class DecisionTreeRegressor:
 
             # note that self.train[index[start:end], feature] has been sorted.
 
-            best_impurity = 0.0
 
             # var = 1/n_samples * (\sum_i (y_i ** 2)) - y_bar**2
             #     = 1/n_samples * (\sum_i (y_i ** 2)) - (\sum_i y_i)**2 / n_samples**2
