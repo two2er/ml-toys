@@ -21,9 +21,6 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, parameter
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
-# Mitigate precision differences between 32 bit and 64 bit
-cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # get random int
@@ -108,6 +105,8 @@ cdef class GBDTRegressor:
         min_samples_split: the minimum number of samples required to split an internal node
         min_score_gain: a node will be split if this split induces a gain of the score greater than or equal to this value
         max_features: number of features considered when splitting a node
+        _lambda: weight of L2 norm regularization on leaf scores
+        _gamma: regularization on number of leaves
         """
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -236,20 +235,14 @@ cdef class GBDTRegressor:
                                            # if current_value == next_value, it is useless
                                            # to evaluate score with current_sample_index
                                            # as a split point
-                                           # (note that we choose (current_value+next_value)/2
-                                           #  as the threshold or split value)
 
             DOUBLE_t left_score
             DOUBLE_t right_score
-            DOUBLE_t left_propo
-            DOUBLE_t right_propo
             DTYPE_t gain_score
             # the current node should be split by the best_feature+best_value, and its best_score is the best...
-            DTYPE_t best_score
+            DTYPE_t best_score = 0
             DTYPE_t best_value
             SIZE_t best_feature
-
-        best_score = 0.0
 
         for j in range(self.max_features):
             # randomly select a feature from self.features[j:self.n_features]
@@ -262,19 +255,6 @@ cdef class GBDTRegressor:
                 self.Xf[i] = self.train[self.index[i]+self.train_feature_stride*feature]
 
             self._qsort_index_from_start_to_end_by_feature_value(start, end-1)
-
-            # check sort
-            # prev = self.train[self.index[start]+self.train_feature_stride*feature]
-            # for i in range(start+1, end):
-            #     if self.train[self.index[i]+self.train_feature_stride*feature] < prev:
-            #         raise ValueError("index sort fail")
-            #     prev = self.train[self.index[i]+self.train_feature_stride*feature]
-            #
-            # prev = self.Xf[start]
-            # for i in range(start+1, end):
-            #     if self.Xf[i] < prev:
-            #         raise ValueError("Xf sort fail")
-            #     prev = self.Xf[i]
 
             # note that self.train[index[start:end], feature] has been sorted.
 
@@ -310,18 +290,12 @@ cdef class GBDTRegressor:
                 # we are going to evaluate score
                 if current_value != next_value:
 
-
                     left_score = sum_left_G ** 2 / (sum_left_H + self._lambda)
                     right_score = sum_right_G ** 2 / (sum_right_H + self._lambda)
-
                     gain_score = left_score + right_score - current_score - self._gamma
 
-
-
                     if gain_score > best_score:
-                        # print('change best:', best_feature, best_value, best_score, gain_score)
                         best_feature, best_value, best_score = feature, current_value, gain_score
-
 
         if best_score/self.n_samples*n_node_samples <= self.min_score_gain:
             node[0][0] = Node(self._weight(start, end), -1, -1, 1, 0, NULL, NULL, start, end)
@@ -373,17 +347,6 @@ cdef class GBDTRegressor:
             else:
                 high -= 1
                 self.index[pos], self.index[high] = self.index[high], self.index[pos]
-        #
-        # assert node[0].start != pos and pos != node[0].end, "fail to choose a valid split point"
-
-        # print('splitting into two nodes:', node[0].start, pos, node[0].end)
-        #
-        # for i in range(node[0].start, node[0].end):
-        #     if i < pos:
-        #         assert self.train[self.index[i]+self.train_feature_stride*node[0].split_feature] <= node[0].split_value, 'split error'
-        #     else:
-        #         assert self.train[self.index[i]+self.train_feature_stride*node[0].split_feature] > node[0].split_value, 'split error'
-        # print('finish splitting check')
 
         self._create_node(&node[0].left, node[0].start, pos)
         self._create_node(&node[0].right, pos, node[0].end)

@@ -97,12 +97,12 @@ cdef class DecisionTreeRegressor:
     def __cinit__(self, max_depth=-1, min_samples_split=2,
                   min_impurity_decrease=0.0, max_features=-1,
                   random_state=-1):
-        '''
+        """
         max_depth: the maximum depth of the tree
         min_samples_split: the minimum number of samples required to split an internal node
         min_impurity_decrease: a node will be split if this split induces a decrease of the impurity greater than or equal to this value
         max_features: number of features considered when spliting a node
-        '''
+        """
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_impurity_decrease = min_impurity_decrease
@@ -233,11 +233,9 @@ cdef class DecisionTreeRegressor:
             DOUBLE_t right_propo
             DOUBLE_t gain_impurity
             # the current node should be split by the best_feature+best_value, and its best_impurity is the best...
-            DOUBLE_t best_impurity
+            DOUBLE_t best_impurity = 0.0
             DTYPE_t best_value
             SIZE_t best_feature
-
-        best_impurity = 0.0
 
         for j in range(self.max_features):
             # randomly select a feature from self.features[j:self.n_features]
@@ -352,15 +350,6 @@ cdef class DecisionTreeRegressor:
                 self.index[pos], self.index[high] = self.index[high], self.index[pos]
 
         assert node[0].start != pos and pos != node[0].end, "fail to choose a valid split point"
-
-        # print('splitting into two nodes:', node[0].start, pos, node[0].end)
-        #
-        # for i in range(node[0].start, node[0].end):
-        #     if i < pos:
-        #         assert self.train[self.index[i]+self.train_feature_stride*node[0].split_feature] <= node[0].split_value, 'split error'
-        #     else:
-        #         assert self.train[self.index[i]+self.train_feature_stride*node[0].split_feature] > node[0].split_value, 'split error'
-        # print('finish splitting check')
 
         self._create_node(&node[0].left, node[0].start, pos)
         self._create_node(&node[0].right, pos, node[0].end)
