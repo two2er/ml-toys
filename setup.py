@@ -23,6 +23,11 @@ extensions = [
         # libraries=['ext_C_libs'],
         # library_dirs=['/some/path/to/include/'],
     ),
+    Extension(
+        # path of .so
+        "supervised.gbdt_tree",
+        ["supervised/gbdt_tree.pyx"],
+    ),
 ]
 
 setup(
