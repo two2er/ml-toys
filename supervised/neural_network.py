@@ -57,25 +57,25 @@ class Network:
                                                  Y[i * self.batch_size:(i + 1) * self.batch_size])
 
                 # update
-                for i in range(1, self.layer_num):
-                    self.W[i] -= self.learning_rate * nabla_W[i]
-                    self.b[i] -= self.learning_rate * nabla_b[i]
+                for j in range(1, self.layer_num):
+                    self.W[j] -= self.learning_rate * nabla_W[j]
+                    self.b[j] -= self.learning_rate * nabla_b[j]
 
                 i += 1
 
             # validate
             pred_Y = self.predict(X)
-            print('round', ep, 'mse:', self.mse(pred_Y, Y))
+            print('round', ep, 'mse:', self._loss(pred_Y, Y))
 
     def predict(self, X):
         assert self.layer_num > 0, 'untrained'
         tmp_X = X
         for layer in range(1, self.layer_num):
-            tmp_X = tmp_X.dot(self.W[layer]) + self.b[layer]
+            tmp_X = self.sigma(tmp_X.dot(self.W[layer]) + self.b[layer])
         return tmp_X
 
     @staticmethod
-    def mse(pred_Y, Y):
+    def _loss(pred_Y, Y):
         return np.sum((pred_Y-Y)**2) / len(Y)
 
     def backdrop(self, x, y):
@@ -115,8 +115,15 @@ class Network:
 
 
 if __name__ == '__main__':
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]], dtype=np.float64)
-    Y = np.array([[100], [0], [100], [0]], dtype=np.float64)
+    from sklearn.datasets import make_hastie_10_2
 
-    nn = Network(epoch=200, shape=[4, 5, 6], batch_size=4)
-    nn.fit(X, Y)
+    from sklearn.model_selection import train_test_split
+    X, y = make_hastie_10_2(random_state=42)
+    y = np.expand_dims(y, axis=1)
+    # Split into training and test set
+    train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=0.3)
+
+    model = Network(epoch=200, shape=[2, 3, 4], batch_size=100, learning_rate=1e-3)
+    model.fit(train_X, train_y)
+    pred = model.predict(test_X)
+    print('loss', model._loss(pred, test_y))
