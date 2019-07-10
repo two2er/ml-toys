@@ -21,9 +21,6 @@ class KdNode:
         self.parent = parent
         # left and right children
         self.left, self.right = None, None
-        # 1 if the left child of the node has been visited.
-        # 0 if the right child of the node has been visited.
-        self.visited = -1
 
 
 class KdTree:
@@ -117,10 +114,8 @@ class KdTree:
         # kd-tree is actually a full binary tree
         while cur_node.left:
             if x[cur_node.splitting_feature] <= cur_node.splitting_value:
-                cur_node.visited = 1
                 cur_node = cur_node.left
             else:
-                cur_node.visited = 0
                 cur_node = cur_node.right
         # append samples in cur_node into k_nn. k_nn is a max heap
         k_nn = []
@@ -131,10 +126,10 @@ class KdTree:
                 dist = np.linalg.norm(self.X[idx] - x)
                 # negate the dist to construct a max heap
                 heapq.heappush(k_nn, (-dist, idx))
-            if abs(x[cur_node.splitting_feature] - cur_node.splitting_value) < -k_nn[0][0]:
+            if abs(x[cur_node.splitting_feature] - cur_node.splitting_value) < -k_nn[0][0] or len(k_nn) < k:
                 # the max distance from x to samples in 'k-nn' > the distance from x to the splitting threshold
                 # check samples of another child
-                if cur_node.visited:
+                if x[cur_node.splitting_feature] <= cur_node.splitting_value:
                     checking_samples = self._samples_of_subtree(cur_node.right, x, k)
                 else:
                     checking_samples = self._samples_of_subtree(cur_node.left, x, k)
@@ -173,8 +168,16 @@ class KdTree:
                 heapq.heappush(k_nn, (-dist, idx))
             while len(k_nn) > k:
                 heapq.heappop(k_nn)
-            dfs(node.left)
-            dfs(node.right)
+            if len(k_nn) < k or \
+               (0 < len(k_nn) and abs(x[node.splitting_feature] - node.splitting_value) < -k_nn[0][0]):
+                # have to search both two children
+                dfs(node.left)
+                dfs(node.right)
+            else:
+                if x[node.splitting_feature] <= node.splitting_value:
+                    dfs(node.left)
+                else:
+                    dfs(node.right)
 
         dfs(root)
         return k_nn
@@ -182,7 +185,7 @@ class KdTree:
 
 if __name__ == '__main__':
     from sklearn.neighbors import NearestNeighbors
-    n_samples, n_features = 1000, 10
+    n_samples, n_features = 2000, 10
     n_test = 100
     K = 5
     X = np.random.random((n_samples, n_features))
