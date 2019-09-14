@@ -108,6 +108,10 @@ class Skip_Gram(nn.Module):
         self.embedding_center = nn.Embedding(vocab_size, embedding_dimen)
         # word representation for context words
         self.embedding_context = nn.Embedding(vocab_size, embedding_dimen)
+        # initialize. very important
+        initrange = 0.5 / embedding_dimen
+        self.embedding_center.weight.data.uniform_(-initrange, initrange)
+        self.embedding_context.weight.data.uniform_(-0, 0)
     
     def forward(self, center_word, context_word, negative_samples):
         # (batch_size, embed_dim)
@@ -124,7 +128,7 @@ class Skip_Gram(nn.Module):
 
 vocab_size = len(vocabulary)
 embed_dim = 100
-epoches = 20
+epoches = 100
 
 loss_function = nn.CrossEntropyLoss()
 model = Skip_Gram(vocab_size, embed_dim)
